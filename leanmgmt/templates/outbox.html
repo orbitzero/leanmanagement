@@ -1,0 +1,4 @@
+{% extends 'base.html' %}{% block content %}
+<h1>Outbox</h1><p class="sub">Every notification is recorded here, even when email/Teams isn't configured.</p>
+<div class="card"><table><tr><th>When</th><th>To</th><th>Subject</th><th>Delivery</th></tr>
+{% for r in rows %}<tr><td class="hint">{{ r.created_at[:16]|replace('T',' ') }}</td><td>{{ r.to_email }}</td><td><b>{{ r.subject }}</b><div class="hint" style="white-space:pre-wrap">{{ r.body }}</div></td><td>{{ r.delivery }}</td></tr>{% else %}<tr><td colspan="4" class="hint">Empty.</td></tr>{% endfor %}</table></div>{% endblock %}

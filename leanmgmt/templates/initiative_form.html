@@ -1,0 +1,16 @@
+{% extends 'base.html' %}{% import '_macros.html' as m with context %}{% block content %}
+{% set v = i or {} %}<h1>{{ 'Edit' if i else 'New' }} initiative</h1>
+<form method="post">{{ m.csrf_field() }}<div class="card">
+<label>Title</label><input name="title" required maxlength="200" value="{{ v.title or '' }}">
+<label>Problem / opportunity</label><textarea name="problem" required>{{ v.problem or '' }}</textarea>
+<label>Value hypothesis <small>(what changes for the business, and how you'll know)</small></label><textarea name="value_hypothesis">{{ v.value_hypothesis or '' }}</textarea>
+<div class="row"><div><label>Size</label>{{ m.select('size', logic.SIZE_LABELS, v.size, '-') }}</div>
+<div><label>Impact</label>{{ m.select('impact', logic.IMPACT, v.impact, '-') }}</div>
+<div><label>Confidence</label>{{ m.select('confidence', logic.CONFIDENCE, v.confidence, '-') }}</div>
+<div><label>Strategic fit</label>{{ m.select('strategic_fit', logic.FIT, v.strategic_fit or 0) }}</div></div>
+<div class="row"><div><label>Status</label><select name="status">{% for s in statuses %}<option {{ 'selected' if v.status == s }}>{{ s }}</option>{% endfor %}</select></div>
+<div><label>Reserved hours / week</label><input type="number" name="reserved_hours" min="0" max="168" value="{{ v.reserved_hours or 0 }}"></div>
+<div><label>Start</label><input type="date" name="start_date" value="{{ v.start_date or '' }}"></div>
+<div><label>Target</label><input type="date" name="target_date" value="{{ v.target_date or '' }}"></div></div>
+<label>Outcome / learnings <small>(fill in at the monthly review: keep, kill, or double down?)</small></label><textarea name="outcome">{{ v.outcome or '' }}</textarea>
+</div><button>Save</button></form>{% endblock %}

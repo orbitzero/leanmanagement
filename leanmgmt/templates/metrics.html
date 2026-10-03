@@ -1,0 +1,12 @@
+{% extends 'base.html' %}{% block content %}
+<h1>Metrics</h1><p class="sub">Evidence for the conversation with your manager and leadership.</p>
+<div class="grid">
+<div class="card"><b>{{ total }}</b> requests total<br><b>{{ direct }}</b> direct asks bypassing the form (interrupts)</div>
+<div class="card">Avg time to first decision: <b>{{ queue_days if queue_days is not none else '-' }}</b> days</div>
+<div class="card">Usefulness: <b>{{ useful_avg if useful_avg is not none else '-' }}</b>/5 ({{ useful_n }} ratings)</div>
+<div class="card">Delivered last 30 days: <b>{{ delivered_hours }}</b> h of requests vs {{ initiative_hours }} h/week reserved for initiatives<br><span class="hint">Target split ad-hoc : planned = {{ budget.reactive|round }} : {{ budget.planned|round }} h/week</span></div></div>
+<h2>Cycle time (submit to delivered) by size</h2>
+<div class="card"><table><tr><th>Size</th><th>Avg days</th><th>Delivered</th></tr>{% for s, (d, n) in cycle.items() %}<tr><td>{{ s }}</td><td>{{ d if d is not none else '-' }}</td><td>{{ n }}</td></tr>{% endfor %}</table></div>
+<h2>By status</h2><div class="card">{% for s, c in by_status.items() %}<span class="badge">{{ status_label(s) }}: {{ c }}</span> {% else %}<span class="hint">No data.</span>{% endfor %}</div>
+<h2>By team</h2><div class="card"><table><tr><th>Team</th><th>Requests</th><th>Delivered</th><th>Deferred / declined / redirected</th></tr>
+{% for t in by_team %}<tr><td>{{ t.team }}</td><td>{{ t.total }}</td><td>{{ t.delivered }}</td><td>{{ t.not_done }}</td></tr>{% endfor %}</table></div>{% endblock %}

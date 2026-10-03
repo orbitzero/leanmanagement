@@ -1,0 +1,7 @@
+{% extends 'base.html' %}{% block content %}
+<h1>Initiatives</h1><p class="sub">Your own projects and bets, scored like any request and given reserved capacity so they don't lose to the loudest voice.</p>
+<p><a class="btn" href="{{ url_for('main.initiative') }}">+ New initiative</a></p>
+<div class="card"><table><tr><th>Initiative</th><th>Status</th><th>Score</th><th>Reserved</th><th>Window</th></tr>
+{% for i in rows %}<tr><td><a href="{{ url_for('main.initiative', iid=i.id) }}">{{ i.title }}</a><div class="hint">{{ i.problem[:120] }}</div></td>
+<td><span class="badge">{{ i.status }}</span></td><td class="num">{{ score(i) if score(i) is not none else '-' }}</td><td>{{ i.reserved_hours }} h/wk</td><td class="hint">{{ i.start_date or '' }} - {{ i.target_date or '' }}</td></tr>
+{% else %}<tr><td colspan="5" class="hint">No initiatives yet.</td></tr>{% endfor %}</table></div>{% endblock %}

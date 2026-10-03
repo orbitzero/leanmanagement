@@ -1,0 +1,47 @@
+{% extends 'base.html' %}{% import '_macros.html' as m with context %}{% block content %}
+<h1>{{ r.title }}</h1>
+<p class="sub"><span class="badge">{{ status_label(r.status) }}</span> {{ m.deadline_badge(r) }} - from {{ r.requester_name }}{% if r.team %} ({{ r.team }}){% endif %}, {{ r.created_at[:10] }}{% if r.source == 'direct' %} - <span class="badge warn">direct ask</span>{% endif %}</p>
+{% if r.decision_reason %}<div class="card"><b>Decision note:</b> {{ r.decision_reason }}{% if r.scheduled_week %}<br>Scheduled: week of {{ r.scheduled_week }}{% endif %}</div>{% endif %}
+<div class="card">
+<h2 style="margin-top:0">The ask</h2><p style="white-space:pre-wrap">{{ r.ask }}</p>
+<div class="grid">
+<div><b>Decision / outcome supported</b><p style="white-space:pre-wrap">{{ r.decision_supported }}</p></div>
+<div><b>Consumer and use</b><p style="white-space:pre-wrap">{{ r.consumer }}</p></div></div>
+<table>
+<tr><th>Type</th><td>{{ logic.REQUEST_TYPES.get(r.type, r.type) }}</td><th>Requester priority</th><td>{{ r.requester_priority }}</td></tr>
+<tr><th>Deadline</th><td>{{ r.hard_deadline or 'flexible' }}{% if r.deadline_consequence %} - {{ r.deadline_consequence }}{% endif %}</td><th>Can it wait?</th><td>{{ r.can_wait or '-' }}</td></tr>
+<tr><th>Value</th><td>{{ r.value_kind or '-' }} {{ r.value_estimate }}</td><th>Sponsor</th><td>{{ r.sponsor or '-' }}</td></tr>
+<tr><th>Data sources</th><td>{{ r.data_sources or '-' }}</td><th>Already tried</th><td>{{ r.tried or '-' }}</td></tr>
+</table></div>
+
+{% if g.user.role == 'admin' %}
+<div class="card"><h2 style="margin-top:0">Triage {% if score is not none %}<span class="badge ok">score {{ score }}</span>{% endif %}</h2>
+<form method="post" action="{{ url_for('main.triage_update', rid=r.id) }}">{{ m.csrf_field() }}
+<div class="row">
+ <div><label>Size</label>{{ m.select('size', logic.SIZE_LABELS, r.size, '-') }}</div>
+ <div><label>Impact</label>{{ m.select('impact', logic.IMPACT, r.impact, '-') }}</div>
+ <div><label>Confidence</label>{{ m.select('confidence', logic.CONFIDENCE, r.confidence, '-') }}</div>
+ <div><label>Strategic fit</label>{{ m.select('strategic_fit', logic.FIT, r.strategic_fit) }}</div>
+</div>
+<div class="row">
+ <div><label>Decision</label>{{ m.select('status', logic.STATUS_LABELS, r.status) }}</div>
+ <div><label>Week <small>(if scheduled)</small></label><input type="date" name="scheduled_week" value="{{ r.scheduled_week or '' }}"></div>
+</div>
+<label>Reason the requester will see <small>(required to defer / decline / redirect / ask for info)</small></label>
+<textarea name="decision_reason">{{ r.decision_reason }}</textarea>
+{% if wip >= wip_limit and r.status != 'in_progress' %}<p class="hint"><label style="display:inline"><input type="checkbox" name="wip_override"> Override WIP limit ({{ wip }}/{{ wip_limit }} in progress)</label></p>{% endif %}
+<p><button>Save decision</button></p></form></div>
+{% endif %}
+
+{% if r.status == 'delivered' and r.requester_id == g.user.id %}
+<div class="card"><h2 style="margin-top:0">Was this useful?</h2>
+{% if r.useful %}<p>You rated this {{ r.useful }}/5. {{ r.outcome_note }}</p>{% else %}
+<form method="post" action="{{ url_for('main.feedback', rid=r.id) }}">{{ m.csrf_field() }}
+{{ m.select('useful', {5:'5 - changed a decision / saved real time',4:'4 - very useful',3:'3 - useful',2:'2 - marginal',1:'1 - not used'}, 4) }}
+<label>What did you do with it? <small>(optional)</small></label><input name="outcome_note"><p><button>Send</button></p></form>{% endif %}</div>
+{% elif r.status == 'delivered' and r.useful %}<div class="card">Rated {{ r.useful }}/5. {{ r.outcome_note }}</div>{% endif %}
+
+<h2>Conversation</h2>
+{% for c in comments %}<div class="comment {{ c.role }}"><b>{{ c.name }}</b> <span class="hint">{{ c.created_at[:16]|replace('T',' ') }}</span><div style="white-space:pre-wrap">{{ c.body }}</div></div>{% else %}<p class="hint">No messages yet.</p>{% endfor %}
+<form method="post" action="{{ url_for('main.comment', rid=r.id) }}">{{ m.csrf_field() }}<textarea name="body" placeholder="Reply or ask a question" required></textarea><p><button>Send</button></p></form>
+{% endblock %}

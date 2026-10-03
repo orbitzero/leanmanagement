@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}Work Intake{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
+<body>
+<nav>
+  <span class="brand">Work Intake</span>
+  {% if g.user %}
+    {% if g.user.role == 'admin' %}
+      <a href="{{ url_for('main.triage') }}">Triage</a>
+      <a href="{{ url_for('main.review') }}">Weekly review</a>
+      <a href="{{ url_for('main.capacity') }}">Capacity</a>
+      <a href="{{ url_for('main.initiatives') }}">Initiatives</a>
+      <a href="{{ url_for('main.metrics') }}">Metrics</a>
+    {% else %}
+      <a href="{{ url_for('main.my_requests') }}">My requests</a>
+    {% endif %}
+    <a href="{{ url_for('main.new_request') }}">+ New request</a>
+    <a href="{{ url_for('main.roadmap') }}">Roadmap</a>
+    <span class="sp"></span>
+    {% if g.user.role == 'admin' %}<a href="{{ url_for('main.settings') }}">Settings</a><a href="{{ url_for('main.outbox') }}">Outbox</a>{% endif %}
+    <form method="post" action="{{ url_for('main.logout') }}"><input type="hidden" name="csrf" value="{{ csrf }}">
+      <button class="ghost">{{ g.user.name }} - sign out</button></form>
+  {% endif %}
+</nav>
+<main>
+  {% for cat, msg in get_flashed_messages(with_categories=true) %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
+  {% block content %}{% endblock %}
+</main></body></html>

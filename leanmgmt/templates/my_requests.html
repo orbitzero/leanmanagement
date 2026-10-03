@@ -1,0 +1,6 @@
+{% extends 'base.html' %}{% import '_macros.html' as m with context %}{% block content %}
+<h1>My requests</h1><p class="sub">Every request gets a decision with a reason.</p>
+{% if not rows %}<div class="card">Nothing yet. <a href="{{ url_for('main.new_request') }}">Submit your first request</a>.</div>{% else %}
+<div class="card"><table><tr><th>Title</th><th>Status</th><th>Deadline</th><th>Submitted</th></tr>
+{% for r in rows %}<tr><td><a href="{{ url_for('main.view_request', rid=r.id) }}">{{ r.title }}</a>{% if r.decision_reason %}<div class="hint">{{ r.decision_reason }}</div>{% endif %}</td>
+<td><span class="badge">{{ status_label(r.status) }}</span></td><td>{{ m.deadline_badge(r) }}</td><td class="hint">{{ r.created_at[:10] }}</td></tr>{% endfor %}</table></div>{% endif %}{% endblock %}

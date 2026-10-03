@@ -1,0 +1,7 @@
+{% extends 'base.html' %}{% import '_macros.html' as m with context %}{% block content %}
+<h1>Triage inbox</h1><p class="sub">5 minutes a day. Open each one, size it, score it, and decide: do now, schedule, defer, redirect, decline - or ask for info.</p>
+{% if not inbox %}<div class="card">Inbox zero.</div>{% else %}
+<div class="card"><table><tr><th>Request</th><th>From</th><th>Asked priority</th><th>Deadline</th><th>Age</th></tr>
+{% for r in inbox %}<tr><td><a href="{{ url_for('main.view_request', rid=r.id) }}"><b>{{ r.title }}</b></a> <span class="badge">{{ status_label(r.status) }}</span>
+<div class="hint">{{ logic.REQUEST_TYPES.get(r.type) }} - {{ r.decision_supported[:110] }}</div></td>
+<td>{{ r.requester_name }}<div class="hint">{{ r.team }}</div></td><td>{{ r.requester_priority }}</td><td>{{ m.deadline_badge(r) }}</td><td class="hint">{{ r.created_at[:10] }}</td></tr>{% endfor %}</table></div>{% endif %}{% endblock %}

@@ -1,0 +1,10 @@
+{% macro csrf_field() %}<input type="hidden" name="csrf" value="{{ csrf }}">{% endmacro %}
+{% macro select(name, options, selected=None, blank=None) %}
+<select name="{{ name }}">{% if blank is not none %}<option value="">{{ blank }}</option>{% endif %}
+{% for k, v in options.items() %}<option value="{{ k }}" {{ 'selected' if selected is not none and selected|string == k|string }}>{{ v }}</option>{% endfor %}
+</select>{% endmacro %}
+{% macro deadline_badge(r) %}{% set d = logic.days_to_deadline(r) %}{% if d is not none %}
+<span class="badge {{ 'hot' if d <= 3 else 'warn' if d <= 7 else '' }}">due {{ r.hard_deadline }}{% if d < 0 %} (overdue){% endif %}</span>{% endif %}{% endmacro %}
+{% macro bar(used, cap, label) %}{% set pct = (used / cap * 100) if cap else 0 %}
+<div class="hint">{{ label }}: <b class="num">{{ used|round(1) }}</b> / {{ cap|round(1) }} h {% if used > cap %}<span class="badge hot">over by {{ (used - cap)|round(1) }}h</span>{% endif %}</div>
+<div class="bar {{ 'over' if used > cap }}"><i style="width:{{ [pct,100]|min }}%"></i></div>{% endmacro %}

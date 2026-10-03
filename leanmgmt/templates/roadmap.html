@@ -1,0 +1,10 @@
+{% extends 'base.html' %}{% block content %}
+<h1>What the data science team is working on</h1><p class="sub">Now, next, later. Submit a request and see where it lands.</p>
+<div class="grid">
+{% for title, items in [('Now', now_), ('Next (4 weeks)', next_), ('Later', later)] %}
+<div class="card"><h2 style="margin-top:0">{{ title }}</h2>
+{% for r in items %}<div style="margin-bottom:8px">{{ r.title }} <div class="hint">{{ r.team or '' }}{% if r.scheduled_week %} - week of {{ r.scheduled_week }}{% endif %}</div></div>{% else %}<p class="hint">-</p>{% endfor %}</div>{% endfor %}
+</div>
+<h2>Strategic initiatives</h2>
+{% for i in inits %}<div class="card"><b>{{ i.title }}</b> <span class="badge">{{ i.status }}</span><div class="hint">{{ i.value_hypothesis or i.problem }}</div></div>{% else %}<p class="hint">None published.</p>{% endfor %}
+{% endblock %}

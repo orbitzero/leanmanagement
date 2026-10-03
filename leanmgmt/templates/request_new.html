@@ -1,0 +1,32 @@
+{% extends 'base.html' %}{% import '_macros.html' as m with context %}{% block content %}
+<h1>Request work from the data science team</h1>
+<p class="sub">The clearer this is, the faster it moves. Requests with a clear decision attached are prioritised; vague ones come back with questions.</p>
+<form method="post">{{ m.csrf_field() }}
+<div class="card">
+<label>Title</label><input name="title" maxlength="200" required value="{{ form.get('title','') }}" placeholder="One line a stranger would understand">
+<label>What exactly do you need? <small>(the output you expect: a number, a chart, a model, a recurring report...)</small></label>
+<textarea name="ask" required>{{ form.get('ask','') }}</textarea>
+<label>What decision or outcome will this support? <small>(required - if nothing changes based on the answer, it can probably wait)</small></label>
+<textarea name="decision_supported" required>{{ form.get('decision_supported','') }}</textarea>
+<label>Who will use the result, and what will they do with it?</label>
+<textarea name="consumer" required>{{ form.get('consumer','') }}</textarea>
+<div class="row">
+  <div><label>Type of work</label>{{ m.select('type', logic.REQUEST_TYPES, form.get('type')) }}
+    <div class="hint">Models/experiments and recurring dashboards are projects - expect a short scoping conversation.</div></div>
+  <div><label>Your priority</label>{{ m.select('requester_priority', {'low':'Low','medium':'Medium','high':'High','critical':'Critical'}, form.get('requester_priority','medium')) }}
+    <div class="hint">An input to prioritisation, not the decider.</div></div>
+</div></div>
+<div class="card"><h2 style="margin-top:0">Timing</h2>
+<div class="row"><div><label>Hard deadline <small>(leave blank if flexible)</small></label><input type="date" name="hard_deadline" value="{{ form.get('hard_deadline','') }}"></div>
+<div><label>What happens if it's missed? <small>(required with a deadline)</small></label><input name="deadline_consequence" value="{{ form.get('deadline_consequence','') }}"></div></div>
+<label>Could this wait for the next planning cycle? Why / why not?</label><input name="can_wait" value="{{ form.get('can_wait','') }}"></div>
+<div class="card"><h2 style="margin-top:0">Value and context <small class="hint">(optional but helps prioritisation)</small></h2>
+<div class="row"><div><label>Type of value</label><select name="value_kind">{% for v in logic.VALUE_KINDS %}<option value="{{ v }}" {{ 'selected' if form.get('value_kind')==v }}>{{ v or '-' }}</option>{% endfor %}</select></div>
+<div><label>Rough size of value</label><input name="value_estimate" value="{{ form.get('value_estimate','') }}" placeholder="e.g. ~$50k/yr, 5 hrs/week"></div></div>
+<label>Data sources you know of</label><input name="data_sources" value="{{ form.get('data_sources','') }}">
+<label>What have you already tried?</label><input name="tried" value="{{ form.get('tried','') }}">
+<label>Sponsor / manager who backs this <small>(for larger asks)</small></label><input name="sponsor" value="{{ form.get('sponsor','') }}">
+{% if g.user.role == 'admin' %}<hr><p class="hint">Logging a direct ask someone sent you elsewhere? Enter them here (counts as an interrupt in Metrics).</p>
+<div class="row"><div><label>Their email</label><input type="email" name="on_behalf_email"></div><div><label>Their name</label><input name="on_behalf_name"></div></div>{% endif %}
+</div>
+<button>Submit request</button></form>{% endblock %}

@@ -1,0 +1,11 @@
+{% extends 'base.html' %}{% import '_macros.html' as m with context %}{% block content %}
+<h1>Settings</h1>
+<form method="post">{{ m.csrf_field() }}<div class="card"><h2 style="margin-top:0">Capacity model</h2>
+<div class="row"><div><label>Focused hours per week <small>(after meetings, admin)</small></label><input type="number" name="focus_hours" value="{{ s.focus_hours }}"></div>
+<div><label>WIP limit <small>(requests in progress at once)</small></label><input type="number" name="wip_limit" value="{{ s.wip_limit }}"></div></div>
+<div class="row"><div><label>Planned % <small>(initiatives)</small></label><input type="number" name="planned_pct" value="{{ s.planned_pct }}"></div>
+<div><label>Ad-hoc %</label><input type="number" name="reactive_pct" value="{{ s.reactive_pct }}"></div>
+<div><label>Buffer %</label><input type="number" name="buffer_pct" value="{{ s.buffer_pct }}"></div></div>
+<p class="hint">Must add up to 100. Suggested start: 55 / 25 / 20.</p><button>Save</button></div></form>
+<h2>People</h2><div class="card"><table><tr><th>Name</th><th>Email</th><th>Team</th><th>Role</th></tr>{% for u in users %}<tr><td>{{ u.name }}</td><td>{{ u.email }}</td><td>{{ u.team }}</td><td>{{ u.role }}</td></tr>{% endfor %}</table>
+<p class="hint">Admins are set with the ADMIN_EMAILS environment variable.</p></div>{% endblock %}

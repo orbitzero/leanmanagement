@@ -1,0 +1,6 @@
+{% extends 'base.html' %}{% import '_macros.html' as m with context %}{% block content %}
+<h1>Capacity - next 6 weeks</h1>
+<p class="sub">{{ settings.focus_hours }} focused hours/week: {{ settings.planned_pct }}% planned initiatives, {{ settings.reactive_pct }}% ad-hoc requests, {{ settings.buffer_pct }}% buffer. Change this in Settings.</p>
+{% for l in load %}<div class="card"><b>Week of {{ l.week }}</b>{{ ' (current)' if loop.first }}
+<div class="row"><div>{{ m.bar(l.planned, budget.planned, 'Planned') }}</div><div>{{ m.bar(l.reactive, budget.reactive, 'Ad-hoc') }}</div></div></div>{% endfor %}
+<p class="hint">Request hours come from size estimates (S=4h, M=16h, L=56h, XL=120h). Only scheduled and in-progress requests count; active initiatives count their reserved hours between start and target dates.</p>{% endblock %}
