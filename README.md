@@ -10,7 +10,7 @@ weekly review with your manager against a capacity budget -> every request gets 
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-ADMIN_EMAILS=you@company.com .venv/bin/python run.py     # http://127.0.0.1:5000
+ADMIN_EMAILS=you@company.com .venv/bin/python run.py     # http://127.0.0.1:5001
 .venv/bin/python -m pytest                                # tests
 ```
 
