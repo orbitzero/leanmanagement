@@ -1,7 +1,13 @@
-{% extends 'base.html' %}{% import '_macros.html' as m with context %}{% block content %}
-<h1>Triage inbox</h1><p class="sub">5 minutes a day. Open each one, size it, score it, and decide: do now, schedule, defer, redirect, decline - or ask for info.</p>
-{% if not inbox %}<div class="card">Inbox zero.</div>{% else %}
-<div class="card"><table><tr><th>Request</th><th>From</th><th>Asked priority</th><th>Deadline</th><th>Age</th></tr>
-{% for r in inbox %}<tr><td><a href="{{ url_for('main.view_request', rid=r.id) }}"><b>{{ r.title }}</b></a> <span class="badge">{{ status_label(r.status) }}</span>
-<div class="hint">{{ logic.REQUEST_TYPES.get(r.type) }} - {{ r.decision_supported[:110] }}</div></td>
-<td>{{ r.requester_name }}<div class="hint">{{ r.team }}</div></td><td>{{ r.requester_priority }}</td><td>{{ m.deadline_badge(r) }}</td><td class="hint">{{ r.created_at[:10] }}</td></tr>{% endfor %}</table></div>{% endif %}{% endblock %}
+{% extends 'base.html' %}{% import '_macros.html' as m with context %}{% block title %}Triage inbox{% endblock %}{% block content %}
+<div class="page-head"><div><h1>Triage inbox</h1><p>Review new requests, assign size and impact, and record a decision. A short daily pass keeps the queue current.</p></div>
+<a class="btn secondary" href="{{ url_for('main.new_request') }}">{{ m.icon('plus') }} Log a direct request</a></div>
+<div class="grid g4" style="margin-bottom:16px">
+<div class="card stat" style="margin:0"><div class="k">Awaiting triage</div><div class="v num">{{ stats.new }}</div><div class="s">{{ stats.needs_info }} awaiting requester reply</div></div>
+<div class="card stat" style="margin:0"><div class="k">Deadlines within 7 days</div><div class="v num" style="{{ 'color:var(--bad)' if stats.due }}">{{ stats.due }}</div><div class="s">Across all open requests</div></div>
+<div class="card stat" style="margin:0"><div class="k">Work in progress</div><div class="v num">{{ stats.wip }} <span style="font-size:15px;color:var(--mute)">/ {{ stats.wip_limit }}</span></div><div class="s">Limit protects focus</div></div>
+<div class="card stat" style="margin:0"><div class="k">Ad-hoc capacity this week</div><div class="v num">{{ stats.reactive_used|round|int }} <span style="font-size:15px;color:var(--mute)">/ {{ stats.reactive_cap|round|int }} h</span></div><div class="s">{{ 'Over budget' if stats.reactive_used > stats.reactive_cap else 'Within budget' }}</div></div></div>
+{% if not inbox %}<div class="card"><div class="empty"><h3>Inbox clear</h3><p>There are no requests awaiting triage.</p></div></div>
+{% else %}<div class="card"><table><thead><tr><th>Request</th><th>Requester</th><th>Priority</th><th>Deadline</th><th>Waiting</th></tr></thead><tbody>
+{% for r in inbox %}<tr><td><a class="t" href="{{ url_for('main.view_request', rid=r.id) }}">{{ r.title }}</a> {{ m.pill(r.status) if r.status == 'needs_info' }}
+<div class="m">{{ logic.REQUEST_TYPES.get(r.type) }} · {{ r.decision_supported[:100] }}{{ '…' if r.decision_supported|length > 100 }}</div></td>
+<td>{{ r.requester_name }}<div class="m">{{ r.team }}</div></td><td>{{ r.requester_priority|capitalize }}</td><td>{{ m.deadline_badge(r) }}</td><td class="m num">{{ r.age_days }} d</td></tr>{% endfor %}</tbody></table></div>{% endif %}{% endblock %}

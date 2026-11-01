@@ -1,11 +1,11 @@
-{% extends 'base.html' %}{% import '_macros.html' as m with context %}{% block content %}
-<h1>Settings</h1>
-<form method="post">{{ m.csrf_field() }}<div class="card"><h2 style="margin-top:0">Capacity model</h2>
-<div class="row"><div><label>Focused hours per week <small>(after meetings, admin)</small></label><input type="number" name="focus_hours" value="{{ s.focus_hours }}"></div>
-<div><label>WIP limit <small>(requests in progress at once)</small></label><input type="number" name="wip_limit" value="{{ s.wip_limit }}"></div></div>
-<div class="row"><div><label>Planned % <small>(initiatives)</small></label><input type="number" name="planned_pct" value="{{ s.planned_pct }}"></div>
-<div><label>Ad-hoc %</label><input type="number" name="reactive_pct" value="{{ s.reactive_pct }}"></div>
-<div><label>Buffer %</label><input type="number" name="buffer_pct" value="{{ s.buffer_pct }}"></div></div>
-<p class="hint">Must add up to 100. Suggested start: 55 / 25 / 20.</p><button>Save</button></div></form>
-<h2>People</h2><div class="card"><table><tr><th>Name</th><th>Email</th><th>Team</th><th>Role</th></tr>{% for u in users %}<tr><td>{{ u.name }}</td><td>{{ u.email }}</td><td>{{ u.team }}</td><td>{{ u.role }}</td></tr>{% endfor %}</table>
-<p class="hint">Admins are set with the ADMIN_EMAILS environment variable.</p></div>{% endblock %}
+{% extends 'base.html' %}{% import '_macros.html' as m with context %}{% block title %}Settings{% endblock %}{% block content %}
+<div class="page-head"><div><h1>Settings</h1><p>Configure the capacity model that governs scheduling and review.</p></div></div>
+<form method="post" style="max-width:780px">{{ m.csrf_field() }}<div class="card"><div class="hd"><h2>Capacity model</h2></div><div class="bd">
+<div class="row"><div><label>Focused hours per week</label><input type="number" name="focus_hours" value="{{ s.focus_hours }}"><div class="help">After meetings and administration.</div></div>
+<div><label>Work-in-progress limit</label><input type="number" name="wip_limit" value="{{ s.wip_limit }}"><div class="help">Requests in progress at one time.</div></div></div>
+<div class="row"><div><label>Planned initiatives (%)</label><input type="number" name="planned_pct" value="{{ s.planned_pct }}"></div>
+<div><label>Ad-hoc requests (%)</label><input type="number" name="reactive_pct" value="{{ s.reactive_pct }}"></div><div><label>Buffer and learning (%)</label><input type="number" name="buffer_pct" value="{{ s.buffer_pct }}"></div></div>
+<div class="help">The three percentages must total 100. Recommended starting point: 55 / 25 / 20.</div>
+<p style="margin-top:18px"><button>Save changes</button></p></div></div></form>
+<div class="card" style="max-width:780px"><div class="hd"><h2>People</h2><span class="help">Administrators are set with the ADMIN_EMAILS environment variable.</span></div>
+<table><thead><tr><th>Name</th><th>Email</th><th>Team</th><th>Role</th></tr></thead><tbody>{% for u in users %}<tr><td>{{ u.name }}</td><td>{{ u.email }}</td><td>{{ u.team }}</td><td>{{ 'Administrator' if u.role == 'admin' else 'Requester' }}</td></tr>{% endfor %}</tbody></table></div>{% endblock %}

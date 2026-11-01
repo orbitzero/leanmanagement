@@ -1,47 +1,62 @@
-{% extends 'base.html' %}{% import '_macros.html' as m with context %}{% block content %}
-<h1>{{ r.title }}</h1>
-<p class="sub"><span class="badge">{{ status_label(r.status) }}</span> {{ m.deadline_badge(r) }} - from {{ r.requester_name }}{% if r.team %} ({{ r.team }}){% endif %}, {{ r.created_at[:10] }}{% if r.source == 'direct' %} - <span class="badge warn">direct ask</span>{% endif %}</p>
-{% if r.decision_reason %}<div class="card"><b>Decision note:</b> {{ r.decision_reason }}{% if r.scheduled_week %}<br>Scheduled: week of {{ r.scheduled_week }}{% endif %}</div>{% endif %}
-<div class="card">
-<h2 style="margin-top:0">The ask</h2><p style="white-space:pre-wrap">{{ r.ask }}</p>
-<div class="grid">
-<div><b>Decision / outcome supported</b><p style="white-space:pre-wrap">{{ r.decision_supported }}</p></div>
-<div><b>Consumer and use</b><p style="white-space:pre-wrap">{{ r.consumer }}</p></div></div>
-<table>
-<tr><th>Type</th><td>{{ logic.REQUEST_TYPES.get(r.type, r.type) }}</td><th>Requester priority</th><td>{{ r.requester_priority }}</td></tr>
-<tr><th>Deadline</th><td>{{ r.hard_deadline or 'flexible' }}{% if r.deadline_consequence %} - {{ r.deadline_consequence }}{% endif %}</td><th>Can it wait?</th><td>{{ r.can_wait or '-' }}</td></tr>
-<tr><th>Value</th><td>{{ r.value_kind or '-' }} {{ r.value_estimate }}</td><th>Sponsor</th><td>{{ r.sponsor or '-' }}</td></tr>
-<tr><th>Data sources</th><td>{{ r.data_sources or '-' }}</td><th>Already tried</th><td>{{ r.tried or '-' }}</td></tr>
-</table></div>
+{% extends 'base.html' %}{% import '_macros.html' as m with context %}{% block title %}{{ r.title }}{% endblock %}{% block content %}
+{% set steps = ['Submitted', 'In review', 'Scheduled', 'In progress', 'Delivered'] %}
+{% set cur = {'new':1,'needs_info':1,'triaged':1,'scheduled':2,'in_progress':3,'delivered':4}.get(r.status) %}
+<span class="crumb"><a href="{{ url_for('main.home') }}">{{ 'Triage inbox' if g.user.role == 'admin' else 'My requests' }}</a> / Request #{{ r.id }}</span>
+<div class="page-head"><div><h1>{{ r.title }}</h1>
+<p>Submitted by {{ r.requester_name }}{% if r.team %} · {{ r.team }}{% endif %} on {{ r.created_at[:10] }}{% if r.source == 'direct' %} · <span class="pill plain warn">Direct request</span>{% endif %}</p></div>
+<div>{{ m.pill(r.status) }} {{ m.deadline_badge(r) }}</div></div>
 
-{% if g.user.role == 'admin' %}
-<div class="card"><h2 style="margin-top:0">Triage {% if score is not none %}<span class="badge ok">score {{ score }}</span>{% endif %}</h2>
-<form method="post" action="{{ url_for('main.triage_update', rid=r.id) }}">{{ m.csrf_field() }}
-<div class="row">
- <div><label>Size</label>{{ m.select('size', logic.SIZE_LABELS, r.size, '-') }}</div>
- <div><label>Impact</label>{{ m.select('impact', logic.IMPACT, r.impact, '-') }}</div>
- <div><label>Confidence</label>{{ m.select('confidence', logic.CONFIDENCE, r.confidence, '-') }}</div>
- <div><label>Strategic fit</label>{{ m.select('strategic_fit', logic.FIT, r.strategic_fit) }}</div>
-</div>
-<div class="row">
- <div><label>Decision</label>{{ m.select('status', logic.STATUS_LABELS, r.status) }}</div>
- <div><label>Week <small>(if scheduled)</small></label><input type="date" name="scheduled_week" value="{{ r.scheduled_week or '' }}"></div>
-</div>
-<label>Reason the requester will see <small>(required to defer / decline / redirect / ask for info)</small></label>
-<textarea name="decision_reason">{{ r.decision_reason }}</textarea>
-{% if wip >= wip_limit and r.status != 'in_progress' %}<p class="hint"><label style="display:inline"><input type="checkbox" name="wip_override"> Override WIP limit ({{ wip }}/{{ wip_limit }} in progress)</label></p>{% endif %}
-<p><button>Save decision</button></p></form></div>
-{% endif %}
+<div class="split"><div class="stack">
+{% if r.status == 'needs_info' and g.user.role != 'admin' %}<div class="notice warn"><b>Additional information requested.</b> Please reply in the conversation below so the request can proceed.</div>{% endif %}
+{% if r.decision_reason %}<div class="notice {{ 'ok' if r.status in ('scheduled','in_progress','delivered') else '' }}"><b>Decision note:</b> {{ r.decision_reason }}{% if r.scheduled_week %}<br><span class="help">Scheduled for the week of {{ r.scheduled_week }}.</span>{% endif %}</div>{% endif %}
+<div class="card"><div class="hd"><h2>Request</h2></div><div class="bd">
+<h3>Requested deliverable</h3><p style="white-space:pre-wrap">{{ r.ask }}</p>
+<div class="grid g2" style="margin-top:14px"><div><h3>Decision or outcome supported</h3><p style="white-space:pre-wrap">{{ r.decision_supported }}</p></div>
+<div><h3>Intended use</h3><p style="white-space:pre-wrap">{{ r.consumer }}</p></div></div></div></div>
 
 {% if r.status == 'delivered' and r.requester_id == g.user.id %}
-<div class="card"><h2 style="margin-top:0">Was this useful?</h2>
-{% if r.useful %}<p>You rated this {{ r.useful }}/5. {{ r.outcome_note }}</p>{% else %}
+<div class="card"><div class="hd"><h2>Feedback</h2></div><div class="bd">
+{% if r.useful %}<p>Thank you. You rated this deliverable <b>{{ r.useful }} out of 5</b>.{% if r.outcome_note %} “{{ r.outcome_note }}”{% endif %}</p>{% else %}
 <form method="post" action="{{ url_for('main.feedback', rid=r.id) }}">{{ m.csrf_field() }}
-{{ m.select('useful', {5:'5 - changed a decision / saved real time',4:'4 - very useful',3:'3 - useful',2:'2 - marginal',1:'1 - not used'}, 4) }}
-<label>What did you do with it? <small>(optional)</small></label><input name="outcome_note"><p><button>Send</button></p></form>{% endif %}</div>
-{% elif r.status == 'delivered' and r.useful %}<div class="card">Rated {{ r.useful }}/5. {{ r.outcome_note }}</div>{% endif %}
+<label>How valuable was this deliverable?</label>
+<div class="seg">{% for v, t in [(1,'1 · Unused'),(2,'2 · Marginal'),(3,'3 · Useful'),(4,'4 · Very useful'),(5,'5 · Decision-changing')] %}<label><input type="radio" name="useful" value="{{ v }}" required>{{ t }}</label>{% endfor %}</div>
+<label>What did you do with it? <small>(optional)</small></label><input name="outcome_note"><p style="margin-top:14px"><button>Submit feedback</button></p></form>{% endif %}</div></div>
+{% elif r.status == 'delivered' and r.useful %}<div class="notice ok">Rated {{ r.useful }} / 5. {{ r.outcome_note }}</div>{% endif %}
 
-<h2>Conversation</h2>
-{% for c in comments %}<div class="comment {{ c.role }}"><b>{{ c.name }}</b> <span class="hint">{{ c.created_at[:16]|replace('T',' ') }}</span><div style="white-space:pre-wrap">{{ c.body }}</div></div>{% else %}<p class="hint">No messages yet.</p>{% endfor %}
-<form method="post" action="{{ url_for('main.comment', rid=r.id) }}">{{ m.csrf_field() }}<textarea name="body" placeholder="Reply or ask a question" required></textarea><p><button>Send</button></p></form>
-{% endblock %}
+<div class="card"><div class="hd"><h2>Conversation</h2><span class="help">{{ comments|length }} message{{ '' if comments|length == 1 else 's' }}</span></div><div class="bd">
+{% for c in comments %}<div class="thread {{ c.role }}"><div class="avatar">{{ c.name[:1]|upper }}</div><div class="bubble"><div class="who"><b>{{ c.name }}</b> · {{ c.created_at[:16]|replace('T',' ') }}</div><div style="white-space:pre-wrap">{{ c.body }}</div></div></div>
+{% else %}<p class="help">No messages yet. Use this space for questions and clarifications.</p>{% endfor %}
+<form method="post" action="{{ url_for('main.comment', rid=r.id) }}" style="margin-top:14px">{{ m.csrf_field() }}<textarea name="body" required style="min-height:70px" placeholder="Write a message…"></textarea><p style="margin-top:10px"><button class="secondary">Send message</button></p></form></div></div>
+</div>
+
+<aside class="stack sticky">
+{% if r.status in ('deferred','declined','redirected') %}<div class="card"><div class="bd"><b>Outcome:</b> {{ status_label(r.status) }}</div></div>
+{% elif cur is not none %}<div class="card"><div class="bd"><div class="stepper">{% for s in steps %}<div class="step {{ 'done' if loop.index0 < cur else 'cur' if loop.index0 == cur }}">{{ s }}</div>{% endfor %}</div></div></div>{% endif %}
+
+{% if g.user.role == 'admin' %}
+<div class="card" data-triage data-days='{{ days_map|tojson }}' data-needs-reason='{{ needs_reason|tojson }}'>
+<div class="hd"><h2>Triage decision</h2><span class="pill plain ok">Score&nbsp;<span data-score class="num">{{ score if score is not none else '—' }}</span></span></div><div class="bd">
+<form method="post" action="{{ url_for('main.triage_update', rid=r.id) }}">{{ m.csrf_field() }}
+<div class="row" style="grid-template-columns:1fr 1fr">
+ <div><label style="margin-top:0">Size</label>{{ m.select('size', logic.SIZE_LABELS, r.size, 'Select…') }}</div>
+ <div><label style="margin-top:0">Impact</label>{{ m.select('impact', logic.IMPACT, r.impact, 'Select…') }}</div>
+ <div><label>Confidence</label>{{ m.select('confidence', logic.CONFIDENCE, r.confidence, 'Select…') }}</div>
+ <div><label>Strategic fit</label>{{ m.select('strategic_fit', logic.FIT, r.strategic_fit) }}</div></div>
+<label>Decision</label>{{ m.select('status', logic.STATUS_LABELS, r.status) }}
+<div data-week hidden><label>Scheduled week</label><input type="date" name="scheduled_week" value="{{ r.scheduled_week or '' }}"></div>
+<label>Note to requester <span class="req" data-req hidden>*</span></label>
+<textarea name="decision_reason" style="min-height:76px" placeholder="Explain the decision. The requester will see this.">{{ r.decision_reason }}</textarea>
+{% if wip >= wip_limit and r.status != 'in_progress' %}<label style="font-weight:500;display:flex;gap:8px;align-items:center"><input type="checkbox" name="wip_override"> Override WIP limit ({{ wip }} of {{ wip_limit }} in progress)</label>{% endif %}
+<p style="margin-top:16px"><button class="block">Save decision</button></p></form></div></div>
+{% endif %}
+
+<div class="card"><div class="hd"><h2>Details</h2></div><div class="bd"><dl class="facts">
+<dt>Type</dt><dd>{{ logic.REQUEST_TYPES.get(r.type, r.type) }}</dd>
+<dt>Requester priority</dt><dd>{{ r.requester_priority|capitalize }}</dd>
+<dt>Deadline</dt><dd>{{ r.hard_deadline or 'Flexible' }}{% if r.deadline_consequence %}<div class="help">{{ r.deadline_consequence }}</div>{% endif %}</dd>
+<dt>Can it wait?</dt><dd>{{ r.can_wait or '—' }}</dd>
+<dt>Business value</dt><dd>{{ ((r.value_kind|capitalize ~ ' ' ~ r.value_estimate)|trim) or '—' }}</dd>
+<dt>Sponsor</dt><dd>{{ r.sponsor or '—' }}</dd>
+<dt>Data sources</dt><dd>{{ r.data_sources or '—' }}</dd>
+<dt>Prior attempts</dt><dd>{{ r.tried or '—' }}</dd></dl></div></div>
+</aside></div>{% endblock %}

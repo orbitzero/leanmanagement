@@ -1,8 +1,15 @@
-{% extends 'base.html' %}{% block content %}
-<div class="card" style="max-width:420px;margin:40px auto">
-<h1>Sign in</h1><p class="sub">Local test mode - no password. Microsoft sign-in comes later (see README).</p>
-<form method="post"><input type="hidden" name="csrf" value="{{ csrf }}">
-<label>Work email</label><input name="email" type="email" required autofocus>
-<label>Your name <small>(first time only)</small></label><input name="name">
-<label>Your team <small>(first time only)</small></label><input name="team" placeholder="e.g. Marketing">
-<p><button>Continue</button></p></form></div>{% endblock %}
+{% import '_macros.html' as m with context %}
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark"><title>Sign in · Lean Intake</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
+<body><div class="auth"><div class="card">
+<div class="logo"><i>L</i>Lean Intake</div>
+<h1>Sign in to your workspace</h1><p class="help" style="margin:6px 0 20px">Submit work requests, track decisions and see what the team is focused on.</p>
+<form method="post">{{ m.csrf_field() }}
+<label>Work email</label><input name="email" type="email" required autofocus autocomplete="email" placeholder="name@company.com">
+<label>Full name <small>(first sign-in only)</small></label><input name="name" autocomplete="name" placeholder="Jordan Smith">
+<label>Team <small>(first sign-in only)</small></label><input name="team" placeholder="e.g. Marketing">
+<p style="margin-top:22px"><button class="block">Continue</button></p>
+<p class="help">Test environment: sign-in uses email only. Single sign-on with Microsoft will be enabled for production.</p></form></div></div>
+<div class="toasts">{% for cat, msg in get_flashed_messages(with_categories=true) %}<div class="toast {{ cat }}"><b>Action required</b>{{ msg }}</div>{% endfor %}</div>
+<script src="{{ url_for('static', filename='app.js') }}"></script></body></html>

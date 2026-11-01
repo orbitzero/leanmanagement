@@ -1,7 +1,8 @@
-{% extends 'base.html' %}{% block content %}
-<h1>Initiatives</h1><p class="sub">Your own projects and bets, scored like any request and given reserved capacity so they don't lose to the loudest voice.</p>
-<p><a class="btn" href="{{ url_for('main.initiative') }}">+ New initiative</a></p>
-<div class="card"><table><tr><th>Initiative</th><th>Status</th><th>Score</th><th>Reserved</th><th>Window</th></tr>
-{% for i in rows %}<tr><td><a href="{{ url_for('main.initiative', iid=i.id) }}">{{ i.title }}</a><div class="hint">{{ i.problem[:120] }}</div></td>
-<td><span class="badge">{{ i.status }}</span></td><td class="num">{{ score(i) if score(i) is not none else '-' }}</td><td>{{ i.reserved_hours }} h/wk</td><td class="hint">{{ i.start_date or '' }} - {{ i.target_date or '' }}</td></tr>
-{% else %}<tr><td colspan="5" class="hint">No initiatives yet.</td></tr>{% endfor %}</table></div>{% endblock %}
+{% extends 'base.html' %}{% import '_macros.html' as m with context %}{% block title %}Initiatives{% endblock %}{% block content %}
+<div class="page-head"><div><h1>Initiatives</h1><p>Long-term projects and strategic bets. Initiatives are scored with the same model as requests and hold reserved capacity so they are not displaced by ad-hoc demand.</p></div>
+<a class="btn" href="{{ url_for('main.initiative') }}">{{ m.icon('plus') }} New initiative</a></div>
+{% if not rows %}<div class="card"><div class="empty"><h3>No initiatives yet</h3><p>Add the projects that will grow the business over the long term, and reserve time for them.</p><a class="btn" href="{{ url_for('main.initiative') }}">Create an initiative</a></div></div>
+{% else %}<div class="card"><table><thead><tr><th>Initiative</th><th>Status</th><th>Score</th><th>Reserved</th><th>Window</th></tr></thead><tbody>
+{% for i in rows %}<tr><td><a class="t" href="{{ url_for('main.initiative', iid=i.id) }}">{{ i.title }}</a><div class="m">{{ i.problem[:120] }}{{ '…' if i.problem|length > 120 }}</div></td>
+<td><span class="pill s-{{ {'active':'in_progress','planned':'scheduled','done':'delivered'}.get(i.status,'deferred') }}">{{ i.status|capitalize }}</span></td>
+<td class="num">{{ score(i) if score(i) is not none else '—' }}</td><td class="num">{{ i.reserved_hours }} h / wk</td><td class="m">{{ i.start_date or '—' }} → {{ i.target_date or '—' }}</td></tr>{% endfor %}</tbody></table></div>{% endif %}{% endblock %}

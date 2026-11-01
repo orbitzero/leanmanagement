@@ -12,7 +12,7 @@ SIZES = {
 SIZE_LABELS = {k: v[0] for k, v in SIZES.items()}
 CONFIDENCE = {50: "50% - unsure it will be used / answerable",
               80: "80% - likely", 100: "100% - certain"}
-FIT = {0: "None", 1: "Supports a company priority", 2: "Directly drives a top priority"}
+FIT = {0: "None", 1: "Supports a priority", 2: "Drives a top priority"}
 IMPACT = {1: "1 - minor", 2: "2 - small", 3: "3 - moderate", 4: "4 - high", 5: "5 - critical"}
 
 REQUEST_TYPES = {

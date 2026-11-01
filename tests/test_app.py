@@ -64,7 +64,7 @@ def test_submit_validation_and_flow(app):
     assert b"What happens if the deadline is missed" in r.data
 
     r = ana.post("/requests/new", **REQ)
-    assert b"Request submitted" in r.data and b"Churn by cohort" in r.data
+    assert b"Your request has been submitted" in r.data and b"Churn by cohort" in r.data
     assert b"Churn by cohort" in ds.get("/triage").data
 
     # someone else can't see it
@@ -77,7 +77,7 @@ def test_submit_validation_and_flow(app):
     wk = (date.today() + timedelta(days=9)).isoformat()
     r = ds.post("/requests/1/triage", status="scheduled", size="M", impact="4", confidence="80",
                 strategic_fit="1", scheduled_week=wk, decision_reason="Supports Q4 retention goal")
-    assert b"Saved" in r.data and b"score" in r.data
+    assert b"Decision saved" in r.data
     assert b"Supports Q4 retention goal" in ana.get("/my").data
     assert b"Churn by cohort" in ds.get("/review").data
     assert b"Churn by cohort" in ds.get("/roadmap").data
@@ -85,7 +85,7 @@ def test_submit_validation_and_flow(app):
     ds.post("/requests/1/triage", status="in_progress", size="M", impact="4", confidence="80")
     ds.post("/requests/1/triage", status="delivered", size="M", impact="4", confidence="80")
     r = ana.post("/requests/1/feedback", useful="5", outcome_note="Changed onboarding email")
-    assert b"Thanks for the feedback" in r.data
+    assert b"feedback has been recorded" in r.data
     assert b"Changed onboarding email" in ds.get("/requests/1").data
     m = ds.get("/metrics").data
     assert b"5.0" in m or b">5<" in m
@@ -111,9 +111,9 @@ def test_wip_limit_and_override(app):
         ana.post("/requests/new", **REQ)
     sized = dict(size="S", impact="3", confidence="100")
     for rid in (1, 2, 3):
-        assert b"Saved" in ds.post(f"/requests/{rid}/triage", status="in_progress", **sized).data
+        assert b"Decision saved" in ds.post(f"/requests/{rid}/triage", status="in_progress", **sized).data
     assert b"WIP limit reached" in ds.post("/requests/4/triage", status="in_progress", **sized).data
-    assert b"Saved" in ds.post("/requests/4/triage", status="in_progress", wip_override="on", **sized).data
+    assert b"Decision saved" in ds.post("/requests/4/triage", status="in_progress", wip_override="on", **sized).data
 
 
 def test_capacity_flags_overload(app):

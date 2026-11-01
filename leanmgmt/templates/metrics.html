@@ -1,12 +1,13 @@
-{% extends 'base.html' %}{% block content %}
-<h1>Metrics</h1><p class="sub">Evidence for the conversation with your manager and leadership.</p>
-<div class="grid">
-<div class="card"><b>{{ total }}</b> requests total<br><b>{{ direct }}</b> direct asks bypassing the form (interrupts)</div>
-<div class="card">Avg time to first decision: <b>{{ queue_days if queue_days is not none else '-' }}</b> days</div>
-<div class="card">Usefulness: <b>{{ useful_avg if useful_avg is not none else '-' }}</b>/5 ({{ useful_n }} ratings)</div>
-<div class="card">Delivered last 30 days: <b>{{ delivered_hours }}</b> h of requests vs {{ initiative_hours }} h/week reserved for initiatives<br><span class="hint">Target split ad-hoc : planned = {{ budget.reactive|round }} : {{ budget.planned|round }} h/week</span></div></div>
-<h2>Cycle time (submit to delivered) by size</h2>
-<div class="card"><table><tr><th>Size</th><th>Avg days</th><th>Delivered</th></tr>{% for s, (d, n) in cycle.items() %}<tr><td>{{ s }}</td><td>{{ d if d is not none else '-' }}</td><td>{{ n }}</td></tr>{% endfor %}</table></div>
-<h2>By status</h2><div class="card">{% for s, c in by_status.items() %}<span class="badge">{{ status_label(s) }}: {{ c }}</span> {% else %}<span class="hint">No data.</span>{% endfor %}</div>
-<h2>By team</h2><div class="card"><table><tr><th>Team</th><th>Requests</th><th>Delivered</th><th>Deferred / declined / redirected</th></tr>
-{% for t in by_team %}<tr><td>{{ t.team }}</td><td>{{ t.total }}</td><td>{{ t.delivered }}</td><td>{{ t.not_done }}</td></tr>{% endfor %}</table></div>{% endblock %}
+{% extends 'base.html' %}{% import '_macros.html' as m with context %}{% block title %}Insights{% endblock %}{% block content %}
+<div class="page-head"><div><h1>Insights</h1><p>Operating metrics for the prioritisation process: responsiveness, delivery and the balance between ad-hoc and planned work.</p></div></div>
+<div class="grid g4" style="margin-bottom:16px">
+<div class="card stat" style="margin:0"><div class="k">Total requests</div><div class="v num">{{ total }}</div><div class="s">{{ direct }} received outside the form</div></div>
+<div class="card stat" style="margin:0"><div class="k">Time to first decision</div><div class="v num">{{ queue_days if queue_days is not none else '—' }}{{ ' d' if queue_days is not none }}</div><div class="s">Average</div></div>
+<div class="card stat" style="margin:0"><div class="k">Deliverable value</div><div class="v num">{{ useful_avg if useful_avg is not none else '—' }}{{ ' / 5' if useful_avg is not none }}</div><div class="s">{{ useful_n }} rating{{ '' if useful_n == 1 else 's' }}</div></div>
+<div class="card stat" style="margin:0"><div class="k">Delivered, last 30 days</div><div class="v num">{{ delivered_hours }} h</div><div class="s">Initiatives reserve {{ initiative_hours }} h per week</div></div></div>
+<div class="grid g2">
+<div class="card" style="margin:0"><div class="hd"><h2>Cycle time by size</h2></div><table><thead><tr><th>Size</th><th>Average days</th><th>Delivered</th></tr></thead><tbody>{% for s, (d, n) in cycle.items() %}<tr><td>{{ s }}</td><td class="num">{{ d if d is not none else '—' }}</td><td class="num">{{ n }}</td></tr>{% endfor %}</tbody></table></div>
+<div class="card" style="margin:0"><div class="hd"><h2>Requests by status</h2></div><div class="bd">{% for s, c in by_status.items() %}<span class="pill s-{{ s }}" style="margin:0 6px 8px 0">{{ status_label(s) }} · {{ c }}</span>{% else %}<p class="help">No data yet.</p>{% endfor %}
+<p class="help" style="margin-top:8px">Target weekly split — ad-hoc {{ budget.reactive|round }} h : planned {{ budget.planned|round }} h.</p></div></div></div>
+<div class="card" style="margin-top:16px"><div class="hd"><h2>Demand by team</h2></div><table><thead><tr><th>Team</th><th>Requests</th><th>Delivered</th><th>Deferred, declined or redirected</th></tr></thead><tbody>
+{% for t in by_team %}<tr><td>{{ t.team }}</td><td class="num">{{ t.total }}</td><td class="num">{{ t.delivered }}</td><td class="num">{{ t.not_done }}</td></tr>{% else %}<tr><td colspan="4" class="m">No data yet.</td></tr>{% endfor %}</tbody></table></div>{% endblock %}

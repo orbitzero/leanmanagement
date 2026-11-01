@@ -20,6 +20,13 @@ def load_user():
     g.user = q1("SELECT * FROM users WHERE id = ?", (uid,)) if uid else None
 
 
+@bp.app_context_processor
+def nav_counts():
+    if g.get("user") is not None and g.user["role"] == "admin":
+        return {"nav_new": q1("SELECT COUNT(*) c FROM requests WHERE status = 'new'")["c"]}
+    return {"nav_new": 0}
+
+
 def login_required(view):
     @wraps(view)
     def wrapped(*a, **kw):
@@ -67,11 +74,11 @@ def login():
     if request.method == "POST":
         email, name = request.form.get("email", "").strip(), request.form.get("name", "").strip()
         if "@" not in email:
-            flash("Enter a valid email address.", "error")
+            flash("Please enter a valid email address.", "error")
         else:
             existing = q1("SELECT * FROM users WHERE email = ?", (email.lower(),))
             if not existing and not name:
-                flash("First time here? Please add your name too.", "error")
+                flash("Please enter your full name to create your account.", "error")
             else:
                 user = find_or_create_user(email, name, request.form.get("team", ""))
                 session.clear()
@@ -147,10 +154,10 @@ def new_request():
                 notify(email, f"New request: {_clean('title', 200)}",
                        f"From {requester['name']} ({requester['team'] or 'no team'}). Priority: {pr}. "
                        f"Deadline: {deadline or 'none'}.\n{link}", teams=True)
-            notify(requester["email"], f"We received your request: {_clean('title', 200)}",
-                   "Thanks - it's in the triage queue. You'll get a decision with the reasoning after the weekly "
-                   f"prioritisation review. Track it here: {link}")
-            flash("Request submitted. You'll be notified when it's triaged.", "ok")
+            notify(requester["email"], f"Request received: {_clean('title', 200)}",
+                   "Thank you. Your request has been received and is in the triage queue. You will receive a decision, "
+                   f"with the reasoning, after the weekly prioritisation review. Track its status here: {link}")
+            flash("Your request has been submitted. You will be notified when a decision is made.", "ok")
             return redirect(url_for("main.view_request", rid=rid))
     return render_template("request_new.html", form=form, logic=logic)
 
@@ -169,7 +176,8 @@ def view_request(rid):
     comments = q("SELECT c.*, u.name, u.role FROM comments c JOIN users u ON u.id = c.user_id "
                  "WHERE request_id = ? ORDER BY c.id", (rid,))
     return render_template("request_detail.html", r=req, comments=comments, score=logic.score(req),
-                           wip=len(q("SELECT 1 FROM requests WHERE status='in_progress'")), wip_limit=int_setting("wip_limit"))
+                           wip=len(q("SELECT 1 FROM requests WHERE status='in_progress'")), wip_limit=int_setting("wip_limit"),
+                           days_map={k: v[1] for k, v in logic.SIZES.items()}, needs_reason=list(logic.NEEDS_REASON))
 
 
 @bp.route("/requests/<int:rid>/comment", methods=["POST"])
@@ -240,12 +248,13 @@ def triage_update(rid):
         if status == "scheduled":
             extra = f" for the week of {sets['scheduled_week']}"
         if status == "delivered":
-            extra = ". Please tell us whether it was useful - it takes 10 seconds"
+            extra = ". Please rate the value of the deliverable; it takes a few seconds"
         notify(req["requester_email"], f"{logic.STATUS_LABELS[status]}: {req['title']}",
                f"Status: {logic.STATUS_LABELS[status]}{extra}.\nReason: {reason or '-'}\n{link}")
-    flash("Saved.", "ok")
-    nxt = request.form.get("next")
-    return redirect(nxt if nxt in ("/triage", "/review") else url_for("main.view_request", rid=rid))
+    flash("Decision saved.", "ok")
+    if req["status"] == "new":  # keep the triage flow moving: back to the inbox for the next item
+        return redirect(url_for("main.triage"))
+    return redirect(url_for("main.view_request", rid=rid))
 
 
 @bp.route("/requests/<int:rid>/feedback", methods=["POST"])
@@ -257,7 +266,7 @@ def feedback(rid):
     useful = request.form.get("useful", type=int)
     if useful in (1, 2, 3, 4, 5):
         run("UPDATE requests SET useful=?, outcome_note=?, updated_at=? WHERE id=?", (useful, _clean("outcome_note"), now(), rid))
-        flash("Thanks for the feedback.", "ok")
+        flash("Thank you. Your feedback has been recorded.", "ok")
     return redirect(url_for("main.view_request", rid=rid))
 
 
@@ -275,7 +284,18 @@ def _sorted_by_score(rows):
 def triage():
     inbox = q("SELECT r.*, u.name AS requester_name, u.team AS team FROM requests r JOIN users u ON u.id = r.requester_id "
               "WHERE status IN ('new','needs_info') ORDER BY (hard_deadline IS NULL), hard_deadline, created_at")
-    return render_template("triage.html", inbox=inbox)
+    inbox = [{**dict(r), "age_days": (date.today() - date.fromisoformat(r["created_at"][:10])).days} for r in inbox]
+    open_rows = q("SELECT * FROM requests WHERE status IN ('new','needs_info','triaged','scheduled','in_progress')")
+    settings = get_settings()
+    this_week = logic.monday(date.today())
+    load = logic.weekly_load([this_week], q("SELECT * FROM requests WHERE status IN ('scheduled','in_progress')"), q("SELECT * FROM initiatives"))[0]
+    stats = {
+        "new": sum(r["status"] == "new" for r in open_rows), "needs_info": sum(r["status"] == "needs_info" for r in open_rows),
+        "due": sum(1 for r in open_rows if (d := logic.days_to_deadline(r)) is not None and d <= 7),
+        "wip": sum(r["status"] == "in_progress" for r in open_rows), "wip_limit": int(settings["wip_limit"]),
+        "reactive_used": load["reactive"], "reactive_cap": logic.capacity_budget(settings)["reactive"],
+    }
+    return render_template("triage.html", inbox=inbox, stats=stats)
 
 
 @bp.route("/review")
