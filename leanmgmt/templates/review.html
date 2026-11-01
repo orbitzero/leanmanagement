@@ -1,0 +1,21 @@
+{% extends 'base.html' %}{% import '_macros.html' as m with context %}{% block title %}Weekly review{% endblock %}{% block content %}
+<div class="page-head"><div><h1>Weekly review</h1><p>Decision forum for the weekly prioritisation meeting. Review ranked work against available capacity and confirm what proceeds, what waits and why.</p></div></div>
+<div class="grid g3" style="margin-bottom:16px">
+{% for l in load %}<div class="card" style="margin:0"><div class="hd"><h2>{{ 'This week' if loop.first else 'Next week' }}</h2><span class="help">Week of {{ l.week }}</span></div><div class="bd">
+{{ m.meter(l.reactive, budget.reactive, 'Ad-hoc requests') }}{{ m.meter(l.planned, budget.planned, 'Planned initiatives') }}
+<div class="help">Buffer reserved: {{ budget.buffer|round(1) }} h</div></div></div>{% endfor %}
+<div class="card" style="margin:0"><div class="hd"><h2>Attention</h2></div><div class="bd">
+<div class="meter"><div class="lbl"><span>Work in progress</span><span class="num"><b>{{ wip }}</b> / {{ settings.wip_limit }}</span></div><div class="bar {{ 'over' if wip > settings.wip_limit|int }}"><i style="width:{{ [wip / (settings.wip_limit|int) * 100, 100]|min }}%"></i></div></div>
+<h3 style="margin-top:14px">Deadlines within 7 days</h3>
+{% for r in urgent %}<div style="margin-top:6px"><a href="{{ url_for('main.view_request', rid=r.id) }}">{{ r.title }}</a> {{ m.deadline_badge(r) }}</div>{% else %}<p class="help">None.</p>{% endfor %}</div></div></div>
+{% for status, label in [('in_progress','In progress'),('scheduled','Scheduled'),('triaged','Triaged, awaiting a slot')] %}
+<div class="card"><div class="hd"><h2>{{ label }}</h2><span class="help">{{ groups[status]|length }} item{{ '' if groups[status]|length == 1 else 's' }}</span></div>
+{% if not groups[status] %}<div class="empty" style="padding:24px">Nothing in this stage.</div>{% else %}
+<table><thead><tr><th>Score</th><th>Request</th><th>Requester</th><th>Size</th><th>Impact</th><th>Deadline</th><th>Week</th></tr></thead><tbody>
+{% for r in groups[status] %}<tr><td class="num"><b>{{ logic.score(r) }}</b></td><td><a class="t" href="{{ url_for('main.view_request', rid=r.id) }}">{{ r.title }}</a></td>
+<td>{{ r.requester_name }}<div class="m">{{ r.team }}</div></td><td>{{ r.size }}</td><td>{{ r.impact }}{% if r.strategic_fit %} <span class="pill plain ok">Strategic</span>{% endif %}</td>
+<td>{{ m.deadline_badge(r) }}</td><td class="m">{{ r.scheduled_week or '' }}</td></tr>{% endfor %}</tbody></table>{% endif %}</div>{% endfor %}
+<div class="card"><div class="hd"><h2>Active initiatives</h2><a href="{{ url_for('main.initiatives') }}">Manage</a></div>
+{% for i in active_inits %}<div class="bd" style="border-top:1px solid var(--line);padding:12px 18px"><a class="t" href="{{ url_for('main.initiative', iid=i.id) }}">{{ i.title }}</a> <span class="help">· {{ i.reserved_hours }} h per week{% if i.target_date %} · target {{ i.target_date }}{% endif %}</span></div>
+{% else %}<div class="empty" style="padding:24px">No active initiatives. Reserve capacity for long-term work in <a href="{{ url_for('main.initiative') }}">Initiatives</a>.</div>{% endfor %}</div>
+{% endblock %}

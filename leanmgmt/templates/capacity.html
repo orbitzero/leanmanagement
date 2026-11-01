@@ -1,0 +1,7 @@
+{% extends 'base.html' %}{% import '_macros.html' as m with context %}{% block title %}Capacity{% endblock %}{% block content %}
+<div class="page-head"><div><h1>Capacity outlook</h1>
+<p>Next six weeks against a budget of {{ settings.focus_hours }} focused hours per week: {{ settings.planned_pct }}% planned initiatives, {{ settings.reactive_pct }}% ad-hoc requests, {{ settings.buffer_pct }}% buffer.</p></div>
+<a class="btn secondary" href="{{ url_for('main.settings') }}">Adjust budget</a></div>
+<div class="grid g2">{% for l in load %}<div class="card" style="margin:0"><div class="hd"><h2>Week of {{ l.week }}</h2>{% if loop.first %}<span class="pill plain">Current</span>{% endif %}</div><div class="bd">
+{{ m.meter(l.planned, budget.planned, 'Planned initiatives') }}{{ m.meter(l.reactive, budget.reactive, 'Ad-hoc requests') }}</div></div>{% endfor %}</div>
+<p class="help" style="margin-top:16px">Request hours are derived from size (S 4 h, M 16 h, L 56 h, XL 120 h) for scheduled and in-progress requests. Active initiatives contribute their reserved hours between their start and target dates.</p>{% endblock %}

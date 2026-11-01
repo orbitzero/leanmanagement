@@ -1,0 +1,10 @@
+{% extends 'base.html' %}{% import '_macros.html' as m with context %}{% block title %}Team roadmap{% endblock %}{% block content %}
+<div class="page-head"><div><h1>Team roadmap</h1><p>What the data science team is working on now, what is scheduled next, and what is planned for later.</p></div></div>
+<div class="grid g3">
+{% for title, sub, items in [('Now', 'In progress or due this week', now_), ('Next', 'Scheduled within four weeks', next_), ('Later', 'Triaged, not yet scheduled', later)] %}
+<div class="card" style="margin:0"><div class="hd"><div><h2>{{ title }}</h2><div class="help">{{ sub }}</div></div><span class="pill plain">{{ items|length }}</span></div><div class="bd">
+{% for r in items %}<div style="padding:8px 0;{{ 'border-top:1px solid var(--line)' if not loop.first }}">{{ r.title }}<div class="help">{{ r.team or 'No team' }}{% if r.scheduled_week %} · week of {{ r.scheduled_week }}{% endif %}</div></div>
+{% else %}<p class="help">No items.</p>{% endfor %}</div></div>{% endfor %}</div>
+<h2 style="margin:28px 0 12px">Strategic initiatives</h2>
+{% for i in inits %}<div class="card"><div class="bd"><b>{{ i.title }}</b> <span class="pill s-{{ 'in_progress' if i.status == 'active' else 'scheduled' }}">{{ i.status|capitalize }}</span><div class="help" style="margin-top:4px">{{ i.value_hypothesis or i.problem }}</div></div></div>
+{% else %}<p class="help">No initiatives are currently published.</p>{% endfor %}{% endblock %}

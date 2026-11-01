@@ -1,0 +1,22 @@
+{% macro csrf_field() %}<input type="hidden" name="csrf" value="{{ csrf }}">{% endmacro %}
+{% macro select(name, options, selected=None, blank=None) %}
+<select name="{{ name }}">{% if blank is not none %}<option value="">{{ blank }}</option>{% endif %}
+{% for k, v in options.items() %}<option value="{{ k }}" {{ 'selected' if selected is not none and selected|string == k|string }}>{{ v }}</option>{% endfor %}
+</select>{% endmacro %}
+{% macro pill(status) %}<span class="pill s-{{ status }}">{{ status_label(status) }}</span>{% endmacro %}
+{% macro deadline_badge(r) %}{% set d = logic.days_to_deadline(r) %}{% if d is not none %}
+<span class="pill plain {{ 'hot' if d <= 3 else 'warn' if d <= 7 else '' }}">Due {{ r.hard_deadline }}{% if d < 0 %} · overdue{% elif d == 0 %} · today{% endif %}</span>{% endif %}{% endmacro %}
+{% macro meter(used, cap, label) %}{% set pct = (used / cap * 100) if cap else 0 %}
+<div class="meter"><div class="lbl"><span>{{ label }}</span><span class="num"><b>{{ used|round(1) }}</b> / {{ cap|round(1) }} h{% if used > cap %} · <span style="color:var(--bad)">over by {{ (used - cap)|round(1) }} h</span>{% endif %}</span></div>
+<div class="bar {{ 'over' if used > cap else 'warn' if pct >= 85 }}"><i style="width:{{ [pct,100]|min }}%"></i></div></div>{% endmacro %}
+{% macro icon(name) %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+{% if name == 'inbox' %}<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5h13L22 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6z"/>
+{% elif name == 'review' %}<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+{% elif name == 'capacity' %}<path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 12l5-5"/>
+{% elif name == 'initiatives' %}<path d="M4 22V4M4 4h13l-2 4 2 4H4"/>
+{% elif name == 'metrics' %}<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>
+{% elif name == 'roadmap' %}<path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>
+{% elif name == 'plus' %}<path d="M12 5v14M5 12h14"/>
+{% elif name == 'list' %}<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
+{% elif name == 'settings' %}<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3.9a7 7 0 0 0-2-1.2L14 3h-4l-.6 2.6a7 7 0 0 0-2 1.2l-2.3-.9-2 3.4 2 1.5A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.5 2 3.4 2.3-.9a7 7 0 0 0 2 1.2L10 21h4l.6-2.6a7 7 0 0 0 2-1.2l2.3.9 2-3.4-2-1.5c.1-.4.1-.8.1-1.2z"/>
+{% elif name == 'mail' %}<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>{% endif %}</svg>{% endmacro %}

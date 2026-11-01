@@ -1,0 +1,10 @@
+{% extends 'base.html' %}{% import '_macros.html' as m with context %}{% block title %}My requests{% endblock %}{% block content %}
+<div class="page-head"><div><h1>My requests</h1><p>Track the status of every request you have submitted. Each request receives a decision with an explanation.</p></div>
+<a class="btn" href="{{ url_for('main.new_request') }}">{{ m.icon('plus') }} New request</a></div>
+{% if not rows %}<div class="card"><div class="empty"><h3>No requests yet</h3><p>Submit your first request to the data science team.</p><a class="btn" href="{{ url_for('main.new_request') }}">Submit a request</a></div></div>
+{% else %}
+<div class="filters" data-filter-group><button class="on" data-f="all">All ({{ rows|length }})</button>
+<button data-f="new,needs_info,triaged">In review</button><button data-f="scheduled,in_progress">Scheduled &amp; active</button><button data-f="delivered">Delivered</button><button data-f="deferred,declined,redirected">Closed without delivery</button></div>
+<div class="card"><table><thead><tr><th>Request</th><th>Status</th><th>Deadline</th><th>Submitted</th></tr></thead><tbody>
+{% for r in rows %}<tr data-status="{{ r.status }}"><td><a class="t" href="{{ url_for('main.view_request', rid=r.id) }}">{{ r.title }}</a>{% if r.decision_reason %}<div class="m">{{ r.decision_reason }}</div>{% endif %}</td>
+<td>{{ m.pill(r.status) }}</td><td>{{ m.deadline_badge(r) }}</td><td class="m">{{ r.created_at[:10] }}</td></tr>{% endfor %}</tbody></table></div>{% endif %}{% endblock %}

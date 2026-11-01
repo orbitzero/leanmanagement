@@ -1,0 +1,39 @@
+{% extends 'base.html' %}{% import '_macros.html' as m with context %}{% block title %}New request{% endblock %}{% block content %}
+<div class="page-head"><div><h1>Submit a request</h1>
+<p>Provide the essentials below. Requests that state the decision they support are prioritised faster; incomplete requests are returned with questions.</p></div></div>
+<form method="post" style="max-width:780px">{{ m.csrf_field() }}
+<div class="card"><div class="hd"><h2>Request details</h2><span class="help">Required fields are marked <span style="color:var(--bad)">*</span></span></div><div class="bd">
+<label>Title <span class="req">*</span></label><input name="title" maxlength="200" required autofocus value="{{ form.get('title','') }}" placeholder="e.g. Churn rate by signup cohort">
+<label>What do you need delivered? <span class="req">*</span></label>
+<textarea name="ask" required placeholder="Describe the output you expect: a figure, an analysis, a dashboard, a model.">{{ form.get('ask','') }}</textarea>
+<label>Which decision or outcome does this support? <span class="req">*</span></label>
+<textarea name="decision_supported" required placeholder="e.g. Whether to change the onboarding flow for new customers.">{{ form.get('decision_supported','') }}</textarea>
+<div class="help">If no decision depends on the result, the request may be better served by an existing report.</div>
+<label>Who will use the result, and how? <span class="req">*</span></label>
+<textarea name="consumer" required style="min-height:64px" placeholder="e.g. Head of Customer Success, in the weekly retention review.">{{ form.get('consumer','') }}</textarea>
+<div class="row" style="margin-top:16px">
+ <div><label>Type of work <span class="req">*</span></label>{{ m.select('type', logic.REQUEST_TYPES, form.get('type','analysis')) }}
+   <div class="help">Models and recurring dashboards are scoped as projects.</div></div>
+ <div><label>Your assessment of priority</label>
+   <div class="seg">{% for p in logic.PRIORITIES %}<label><input type="radio" name="requester_priority" value="{{ p }}" {{ 'checked' if form.get('requester_priority','medium') == p }}>{{ p|capitalize }}</label>{% endfor %}</div>
+   <div class="help">Considered alongside impact and effort.</div></div>
+</div></div></div>
+
+<details class="more" style="margin-bottom:16px" {{ 'open' if form.get('hard_deadline') or form.get('value_kind') or form.get('data_sources') }}>
+<summary>Timing and business context <span class="help" style="font-weight:400;margin-left:8px">Optional · improves prioritisation</span></summary>
+<div class="in">
+<div class="row"><div><label>Hard deadline</label><input type="date" name="hard_deadline" value="{{ form.get('hard_deadline','') }}"><div class="help">Leave blank if the date is flexible.</div></div>
+<div><label>Impact if the deadline is missed</label><input name="deadline_consequence" value="{{ form.get('deadline_consequence','') }}" placeholder="Required when a deadline is set"></div></div>
+<label>Can this wait until the next planning cycle?</label><input name="can_wait" value="{{ form.get('can_wait','') }}" placeholder="e.g. Yes, if the answer is available before month-end">
+<div class="row"><div><label>Type of business value</label><select name="value_kind">{% for v in logic.VALUE_KINDS %}<option value="{{ v }}" {{ 'selected' if form.get('value_kind')==v }}>{{ v|capitalize if v else 'Select…' }}</option>{% endfor %}</select></div>
+<div><label>Estimated value</label><input name="value_estimate" value="{{ form.get('value_estimate','') }}" placeholder="e.g. $50k per year, 5 hours per week"></div></div>
+<div class="row"><div><label>Known data sources</label><input name="data_sources" value="{{ form.get('data_sources','') }}"></div>
+<div><label>Sponsor or approving manager</label><input name="sponsor" value="{{ form.get('sponsor','') }}"></div></div>
+<label>Previous attempts</label><input name="tried" value="{{ form.get('tried','') }}" placeholder="What has already been tried or checked?">
+{% if g.user.role == 'admin' %}<hr style="border:0;border-top:1px solid var(--line);margin:20px 0 4px">
+<p class="help" style="margin-top:12px"><b>Log a direct request.</b> Record a request received outside this form so it is tracked as an interruption.</p>
+<div class="row"><div><label>Requester email</label><input type="email" name="on_behalf_email"></div><div><label>Requester name</label><input name="on_behalf_name"></div></div>{% endif %}
+</div></details>
+<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button>Submit request</button><a class="btn secondary" href="{{ url_for('main.home') }}">Cancel</a>
+<span class="help">You will receive confirmation and a decision with its reasoning.</span></div>
+</form>{% endblock %}
